@@ -1,16 +1,19 @@
+import re
 import urllib
+import pandas as pd
 import base64
 import pylab
 import StringIO
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import OrderedDict
 from django.shortcuts import render, render_to_response
 from django.views.generic import View
 from django.template import RequestContext
 from django.template.response import TemplateResponse
 from scipy.stats import stats
 from basehandler.models import Company, IntervalData
-from utility.utils import execute_raw_query
+from utility.utils import execute_raw_query,sort_dict_alphanumeric_keys
 # Create your views here.
 
 def fetch_data_list(*args):
@@ -59,23 +62,30 @@ class CompanyStatistics(View):
     def post(self, request):
         company_list = fetch_data_list(Company)
         company_val = request.POST.get('company')
+        graph_type = request.POST.get('graph_type', 'barchart')
         if not company_val:
             err_message = 'Please select atleast one filter for results.'
             return TemplateResponse(request, 'company_stats.html', locals())
         company_rating_data = fetch_company_rating(company_val, '', 'id', True)
         crs = self.month_wise_company_relative_score(company_rating_data, company_val)
-        graph_image = self.plot_graph_image(crs)
+        crs = OrderedDict( sorted( crs.items(), key = sort_dict_alphanumeric_keys ) )
+        graph_image = self.plot_graph_image(crs, graph_type)
         return TemplateResponse(request, 'company_stats.html', locals())
    
-    def plot_graph_image(self,data_set):
-        interval_name = np.array(data_set.keys())
-        relative_score = np.array(data_set.values())
-        pylab.figure(1)
-        x = range(len(data_set.keys()))
-        pylab.xticks(x, interval_name)
-        pylab.plot(x, relative_score)
-        pylab.tight_layout()
-        image_html = get_image_uri_from_plot(pylab)
+    def plot_graph_image(self,data_set, graph_type='barchart'):
+        data_set = pd.DataFrame.from_dict(data_set, orient='index')
+        if graph_type == 'barchart':
+            data_set.plot(kind='bar',stacked=True,legend=None,title="Company Relative Score")
+        else:
+            data_set.plot(legend=None,title="Company Relative Score")
+        #interval_name = np.array(data_set.keys())
+        #relative_score = np.array(data_set.values())
+        #pylab.figure(1)
+        #x = range(len(data_set.keys()))
+        #pylab.xticks(x, interval_name)
+        #pylab.plot(x, relative_score)
+        #pylab.tight_layout()
+        image_html = get_image_uri_from_plot(plt)
         return image_html
 
 
