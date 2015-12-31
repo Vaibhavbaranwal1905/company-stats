@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}
+    Company Ranking
+{% endblock %}
+{% block body %}
+    <div class="row-fluid">
+	<div class="panel panel-primary">
+        	<div class="panel-heading">
+            		<h3 class="panel-title">Company Statistic Filter</h3>
+        	</div>
+        	<div class="panel-body">
+			<form action='' method='post'>
+			{% csrf_token %}
+			<div class="row">
+				<label class="control-label col-xs-2">Company:</label>
+				<div class="col-xs-3">
+					<select name='company' class="form-control">
+						<option value=''>Select Company</option>
+						{% for each in company_list %}
+							<option value='{{each.0}}'>{{each.1}}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="col-xs-2">
+					<input type="submit" class="btn btn-primary" value="Submit">
+				</div>
+			</div>
+			</form>
+		</div>
+    	</div>
+	{% if err_message %}
+		<div class="alert alert-warning">
+        		<strong>!</strong> {{err_message}}
+    		</div>	
+	{% endif %}
+	{% if company_rating_data %}
+        <img src='{{graph_image}}'>	
+    {% endif %}
+    </div>
+{% endblock %}
+
+
+
+
+
+
+
+
